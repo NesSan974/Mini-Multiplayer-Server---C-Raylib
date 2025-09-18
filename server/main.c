@@ -18,25 +18,26 @@
 
 #include "net_protocol.h"
 
-#define TICK_RATE_MS 50 // 20 updates/sec
+#define STB_DS_IMPLEMENTATION
+#include "stb_ds.h"
 
+#define TICK_RATE_MS 50 // 20 updates/sec
 
 uint8_t last_playerid = 0;
 fd_set readfds;
 
+// arrput
+PlayerNetwork *da_players = NULL;
 
-
-PlayerNetwork players[MAX_PLAYERS];
-
-PlayerNetwork* getPlayer(int socket)
+int getPlayerIndex(int socket)
 {
-    for (size_t i = 0; i < MAX_PLAYERS; i++)
+    for (size_t i = 0; i < arrlen(da_players); i++)
     {
-        if (players[i].socket_fd == socket)
-            return &players[i];
+        if (da_players[i].socket_fd == socket)
+            return i;
     }
 
-    return NULL;
+    return -1;
 }
 
 uint64_t current_time_ms()
@@ -49,72 +50,38 @@ uint64_t current_time_ms()
 void broadcast_all_player_goplay()
 {
     printf("broadcast_all_player_goplay()\n");
-    for (size_t i = 0; i < MAX_PLAYERS; i++)
+    for (size_t i = 0; i < arrlen(da_players); i++)
     {
 
-        if (players[i].socket_fd <= 0)
-            continue;
+        printf("sending 'G' to %d\n", da_players[i].socket_fd);
+        send(da_players[i].socket_fd, &(char){GOPLAY}, sizeof(char), 0);
+        send(da_players[i].socket_fd, &(uint16_t){0}, sizeof(uint16_t), 0);
+        send(da_players[i].socket_fd, &(uint8_t){0}, sizeof(uint8_t), 0);
 
-        printf("sending 'G' to %d\n", players[i].socket_fd);
-        send(players[i].socket_fd, &(char){GOPLAY}, sizeof(char), 0);
-        send(players[i].socket_fd, &(uint16_t){0}, sizeof(uint16_t), 0);
-        send(players[i].socket_fd, &(uint8_t){0}, sizeof(uint8_t), 0);
-
-        players[i].playerstate = ALIVE;
+        da_players[i].playerstate = ALIVE;
     }
 }
 
 void broadcast_all_player_positions()
 {
-    // --- Étape 1 : Filtrer les joueurs connectés ---
-    // On récupere tout les players actif dans le tableau "players_buffer"
 
-    PlayerNetwork players_buffer[MAX_PLAYERS]; // Buffer temporaire
-    uint8_t nb_active_players = 0;
-
-    for (size_t i = 0; i < MAX_PLAYERS; i++)
+    int nb_players = arrlen(da_players);
+    for (size_t i = 0; i < nb_players; i++)
     {
-
-        PlayerNetwork *p = &players[i];
-
-        if (p->socket_fd <= 0)
-            continue;
-        if (p->playerstate == IDLE || p->playerstate == WAITING_LOBBY)
-            continue;
-
-        players_buffer[nb_active_players++] = *p;
-    }
-
-    // --- Étape 2 : Copier les joueurs actifs dans un tableau à taille exacte ---
-    // On créé un tableau (active_players) qui possede exactement la bonne taille, et on y copie les données de players_buffer
-
-    PlayerNetwork active_players[nb_active_players];
-    memcpy(active_players, players_buffer, nb_active_players * sizeof(PlayerNetwork));
-
-    // --- Étape 3 : Debug (affiche les joueurs actifs) ---
-
-    for (size_t i = 0; i < nb_active_players; i++)
-        printf("act player : %d\n", active_players[i].socket_fd);
-
-    // --- Étape 4 : Broadcast de tous les joueurs actifs à tous les autres ---
-
-    for (size_t i = 0; i < nb_active_players; i++)
-    {
-        int socket = active_players[i].socket_fd;
+        int socket = da_players[i].socket_fd;
 
         // Envois de type de message et de la taille des données à venir
         send(socket, &(char){UPDATE_ALL_PLAYERS}, sizeof(char), 0);
-        send(socket, &(uint16_t){playerNetworkSize * nb_active_players}, sizeof(uint16_t), 0);
+        send(socket, &(uint16_t){playerNetworkSize * nb_players}, sizeof(uint16_t), 0);
 
-        for (size_t j = 0; j < nb_active_players; j++)
+        for (size_t j = 0; j < nb_players; j++)
         {
-            PlayerNetwork *otherPlayer = &players[j];
+            PlayerNetwork *otherPlayer = &da_players[j];
 
             send(socket, &otherPlayer->socket_fd, sizeof(int), 0);
             send(socket, &otherPlayer->x, sizeof(float), 0);
             send(socket, &otherPlayer->y, sizeof(float), 0);
             send(socket, &otherPlayer->playerstate, sizeof(uint8_t), 0);
-
         }
     }
 }
@@ -155,10 +122,13 @@ void HandleMessage(int socket)
         // Si la connexion à été fermé
         // Alors on reset le player
 
-        PlayerNetwork *p = getPlayer(socket);
-        p->socket_fd = -1;
-        p->x = -1, p->y = -1;
-        p->playerstate = IDLE;
+        int index = getPlayerIndex(socket);
+        if (index < 0)
+            return;
+
+        PlayerNetwork *p = &da_players[index];
+
+        arrdel(da_players, index);
 
         close(socket); // Je sais pas si on doit le mettre vu qu'en téhorie c'est déjà close ..
         return;
@@ -183,20 +153,21 @@ void HandleMessage(int socket)
         uint8_t nil_data;
         n = recv(socket, &nil_data, sizeof(nil_data), 0);
 
-        players[last_playerid++] = (struct PlayerNetwork){
+        PlayerNetwork p = {
             .socket_fd = socket,
             .playerstate = IDLE,
             .x = -1,
             .y = -1,
         };
+
+        arrpush(da_players, p);
+
         printf("all connected players :\n");
 
-        for (size_t i = 0; i < MAX_PLAYERS; i++)
+        for (size_t i = 0; i < arrlen(da_players); i++)
         {
-            if (players[i].socket_fd > 0)
-            {
-                printf("%d\n", players[i].socket_fd);
-            }
+
+            printf("%d\n", da_players[i].socket_fd);
         }
         printf("-------------\n");
 
@@ -213,30 +184,22 @@ void HandleMessage(int socket)
         uint8_t data_id;
         recv(socket, &data_id, sizeof(data_id), 0);
 
-        PlayerNetwork *p = getPlayer(socket);
-        if (p->socket_fd == -1)
-        {
-            printf("clacrise wola \n");
-            exit(-693); // TODO : on devrait pas exit, c'est pour voir  quand ca arrive ici
-            send(socket, &(char){ERROR}, sizeof(char), 0);
-            send(socket, &(uint16_t){0}, sizeof(uint16_t), 0);
-            send(socket, &(uint8_t){0}, sizeof(uint8_t), 0);
-
+        int index = getPlayerIndex(socket);
+        if (index < 0)
             return;
-        }
+
+        PlayerNetwork *p = &da_players[index];
 
         p->playerstate = WAITING_LOBBY;
 
-        int nbReady = 0;
-        for (size_t i = 0; i < MAX_PLAYERS; i++)
+        int nbPlayerWaitingReady = 0;
+
+        for (size_t i = 0; i < arrlen(da_players); i++)
         {
-            if (players[i].socket_fd > 0)
-            {
-                nbReady += players[i].playerstate == WAITING_LOBBY ? 1 : 0;
-            }
+            nbPlayerWaitingReady += da_players[i].playerstate == WAITING_LOBBY ? 1 : 0;
         }
 
-        if (nbReady >= 2)
+        if (nbPlayerWaitingReady >= arrlen(da_players))
         {
             broadcast_all_player_goplay();
         }
@@ -252,12 +215,16 @@ void HandleMessage(int socket)
         recv(socket, &playerPositionX, sizeof(playerPositionX), 0);
         recv(socket, &playerPositionY, sizeof(playerPositionY), 0);
 
-        PlayerNetwork *p = getPlayer(socket);
+        int index = getPlayerIndex(socket);
+        if (index < 0)
+            return;
+
+        PlayerNetwork *p = &da_players[index];
 
         p->x = playerPositionX;
         p->y = playerPositionY;
 
-        printf("[%d] %f, %f\n", socket, playerPositionX, playerPositionY);
+        // printf("[%d] %f, %f\n", socket, playerPositionX, playerPositionY);
     }
     break;
 
@@ -270,11 +237,17 @@ void HandleMessage(int socket)
 
         close(socket);
 
-        PlayerNetwork *p = getPlayer(socket);
-        p->socket_fd = -1;
-        p->playerstate = IDLE;
-        p->x = -1.0f;
-        p->y = -1.0f;
+        int index = getPlayerIndex(socket);
+        if (index < 0)
+            return;
+
+        PlayerNetwork *p = &da_players[index];
+        // p->socket_fd = -1;
+        // p->playerstate = IDLE;
+        // p->x = -1.0f;
+        // p->y = -1.0f;
+
+        arrdel(da_players, index);
     }
     break;
 
@@ -314,14 +287,11 @@ int HandleConnectedClient()
     int max_fd = -1;
 
     // On met dans "readfds" uniquement les clients qui ont deja un fd. donc les client "connecté"
-    for (size_t i = 0; i < MAX_PLAYERS; i++)
+    for (size_t i = 0; i < arrlen(da_players); i++)
     {
-        int clt_fd = players[i].socket_fd;
-        if (clt_fd > 0)
-        {
-            FD_SET(clt_fd, &readfds);
-            max_fd = max_fd >= clt_fd ? max_fd : clt_fd;
-        }
+        int sock = da_players[i].socket_fd;
+        FD_SET(sock, &readfds);
+        max_fd = max_fd >= sock ? max_fd : sock;
     }
 
     if (max_fd < 0)
@@ -332,14 +302,13 @@ int HandleConnectedClient()
         return -1;
 
     // On boucle sur les joueur et on interperete les messages
-    for (size_t i = 0; i < MAX_PLAYERS; i++)
+    for (size_t i = 0; i < arrlen(da_players); i++)
     {
-        if (FD_ISSET(players[i].socket_fd, &readfds))
+        if (FD_ISSET(da_players[i].socket_fd, &readfds))
         {
             // SI il a été mis a jour
-            players[i].socket_fd;
             // printf("this sock will be updated %d \n", players[i].socket_fd);
-            HandleMessage(players[i].socket_fd);
+            HandleMessage(da_players[i].socket_fd);
         }
     }
 }
@@ -349,15 +318,6 @@ int main(void)
 
     // Ignore le signal SIGPIPE, arrive lorsqu'on ecrit dans un socket fermé, et clos le programme de manière innopiné
     signal(SIGPIPE, SIG_IGN);
-
-    // Initialisation du tableau players
-    for (size_t i = 0; i < MAX_PLAYERS; i++)
-    {
-        players[i] = (PlayerNetwork){
-            .socket_fd = -1,
-            .x = -1.0f,
-            .y = -1.0f};
-    }
 
     // ---------------------------- SOCKET
 

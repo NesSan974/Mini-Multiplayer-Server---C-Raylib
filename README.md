@@ -1,8 +1,15 @@
+
 # 🎮 Mini Multiplayer Server - C / Raylib
 
-Ce projet est un petit prototype de **serveur multijoueur** codé en **C** avec des clients graphiques utilisant **Raylib**. Il a été développé en **2 jours** dans le but d’expérimenter les sockets, la synchronisation réseau et un protocole custom simple.
+Ce projet est un petit prototype de **serveur multijoueur** codé en **C** avec des clients graphiques utilisant **Raylib**. Il a été développé en **2 jours** dans le but d’expérimenter les sockets, la synchronisation réseau et un protocole custom simple en TCP/IP classic.
 
-J'ai utilisé [raylib-quickstart](https://github.com/raylib-extras/raylib-quickstart) ainsi que l'exemple [example - input keys](https://github.com/raysan5/raylib/blob/master/examples/core/core_input_keys.c) (demo de l'exemple [dispo ici](https://www.raylib.com/examples.html) )
+J'ai utilisé [raylib-quickstart](https://github.com/raylib-extras/raylib-quickstart) ainsi que l'exemple [example - input keys](https://github.com/raysan5/raylib/blob/master/examples/core/core_input_keys.c) (demo de l'exemple [dispo ici](https://www.raylib.com/examples.html) ) comme base.
+
+![plateform linux](https://img.shields.io/badge/platform-Linux-orange?logo=linux&logoColor=white)
+![Raylib](https://img.shields.io/badge/raylib-Powered-9cf?logo=Raylib)
+![Learning Project](https://img.shields.io/badge/status-Learning-blue)
+![Sockets](https://img.shields.io/badge/network-Sockets-informational?logo=Socket&logoColor=white)
+![DIY Networking](https://img.shields.io/badge/DIY-Networking-green?logo=textpattern&logoColor=white)
 
 ---
 

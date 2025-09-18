@@ -46,4 +46,4 @@ enum Player_State
     WAITING_LOBBY = 3,
 };
 
-#endif
+#endif // __NET_PROTOCOL_H__

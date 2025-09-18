@@ -14,6 +14,7 @@
 		"compare": "c",
 		"cstdint": "c",
 		"*.m": "c",
-		"algorithm": "c"
+		"algorithm": "c",
+		"net_protocol.h": "c"
 	}
 }

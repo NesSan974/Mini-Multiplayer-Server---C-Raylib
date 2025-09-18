@@ -11,22 +11,29 @@
 
 #include "../../server/net_protocol.h"
 
-
+enum Game_State
+{
+    GS_MENU = 0,
+    GS_LOBBY = 1,
+    GS_GAME = 2,
+};
 
 int sockfd;
-uint8_t id;
-Vector2 playerPosition;
-float playerSpeed = 10.0f;
+int id;
+
 uint8_t game_state = 1;
 
 PlayerNetwork players[MAX_PLAYERS];
+
+const int screenWidth = 1200;
+const int screenHeight = 720;
 
 void sendPlayerPosition(Vector2 position)
 {
     send(sockfd, &(char){PLAYER_MOVE}, sizeof(char), 0);
     send(sockfd, &(uint16_t){sizeof(position.x) + sizeof(position.y)}, sizeof(uint16_t), 0);
 
-    // NOTE : Verifier les endianess htons/htonl si ca pose pas de probleme
+    // NOTE : Verifier les endianess htons/htonl 
 
     send(sockfd, &position.x, sizeof(position.x), 0);
     send(sockfd, &position.y, sizeof(position.y), 0);
@@ -45,17 +52,19 @@ void pullFromServer()
 
     uint16_t length;
     n = recv(sockfd, &length, sizeof(length), MSG_WAITALL);
+        // NOTE : verifier endianess 
 
     switch (type)
     {
     case WELCOME:
+        // NOTE : verifier endianess 
 
         recv(sockfd, &id, sizeof(id), MSG_WAITALL);
         break;
 
     case UPDATE_ALL_PLAYERS:
 
-        // NOTE : verifier endianess si vrai lan cross plateform
+        // NOTE : verifier endianess 
         for (size_t i = 1; i <= length / playerNetworkSize; i++)
         {
             n = recv(sockfd, &players[i], playerNetworkSize, 0);
@@ -68,7 +77,7 @@ void pullFromServer()
         uint8_t nil;
         recv(sockfd, &nil, sizeof(nil), MSG_WAITALL);
 
-        game_state++;
+        game_state = GS_GAME;
         break;
 
     default:
@@ -83,91 +92,125 @@ void pullFromServer()
 void sendReadyToPlay()
 {
     send(sockfd, &(char){READY}, sizeof(char), 0);
-    send(sockfd, &(uint16_t){sizeof(id)}, sizeof(uint16_t), 0);
-    send(sockfd, &id, sizeof(id), 0);
+    // NOTE : endianess a gerer
+    send(sockfd, &(uint16_t){sizeof(bool)}, sizeof(uint16_t), 0);
+    send(sockfd, &(uint8_t){true}, sizeof(uint8_t), 0);
 }
 
 void lobby_update()
 {
 
-    //----------------------------------------------------------------------------------
-    // Update
-    //----------------------------------------------------------------------------------
-    Vector2 mousePoint = GetMousePosition();
-
     Rectangle button = {200.0f, 200.0f, 300.0f, 50.0f};
+    Color btn_color = BLUE;
 
-    pullFromServer();
+    bool btn_isActive = true;
 
-    // Check button state
-    if (CheckCollisionPointRec(mousePoint, button) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+    char *titleText = "Lobby, Click when ready";
+
+    while (!WindowShouldClose() && game_state == GS_LOBBY)
     {
-        sendReadyToPlay();
+        //----------------------------------------------------------------------------------
+        // Update
+        //----------------------------------------------------------------------------------
+
+        Vector2 mousePoint = GetMousePosition();
+
+        pullFromServer();
+
+        if (btn_isActive)
+        {
+            btn_color = BLUE;
+
+            // Check button state
+            if (CheckCollisionPointRec(mousePoint, button))
+            {
+                btn_color = RED;
+
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+                {
+                    sendReadyToPlay();
+
+                    btn_color = ORANGE;
+                    titleText = "Lobby, U R READY !!";
+                    btn_isActive = false;
+                }
+            }
+        }
+
+        //----------------------------------------------------------------------------------
+        // Draw
+        //----------------------------------------------------------------------------------
+        BeginDrawing();
+
+        ClearBackground(RAYWHITE);
+
+        DrawText(titleText, 10, 10, 20, DARKGRAY);
+        if (btn_isActive)
+        {
+            DrawRectangle(button.x, button.y, button.width, button.height, btn_color);
+            DrawText("Click when ready ", button.x, button.y, 30, BLACK);
+        }
+        EndDrawing();
+        //----------------------------------------------------------------------------------
     }
-
-    //----------------------------------------------------------------------------------
-    // Draw
-    //----------------------------------------------------------------------------------
-    BeginDrawing();
-
-    ClearBackground(RAYWHITE);
-
-    DrawText("Lobby : Waiting to start ", 10, 10, 20, DARKGRAY);
-
-    DrawRectangle(button.x, button.y, button.width, button.height, GREEN);
-
-    EndDrawing();
-    //----------------------------------------------------------------------------------
 }
 
 void game_update()
 {
 
-    //----------------------------------------------------------------------------------
-    // Update
-    //----------------------------------------------------------------------------------
+    Vector2 playerPosition = (Vector2){(float)screenWidth / 2, (float)screenHeight / 2};
 
-    pullFromServer();
+    float playerSpeed = 10.0f;
 
-    if (IsKeyDown(KEY_UP))
-        playerPosition.y -= playerSpeed;
-
-    if (IsKeyDown(KEY_DOWN))
-        playerPosition.y += playerSpeed;
-
-    if (IsKeyDown(KEY_LEFT))
-        playerPosition.x -= playerSpeed;
-
-    if (IsKeyDown(KEY_RIGHT))
-        playerPosition.x += playerSpeed;
-
-    // Deja caper avec setTargetFPS()
-    sendPlayerPosition(playerPosition);
-
-    //----------------------------------------------------------------------------------
-    // Draw
-    //----------------------------------------------------------------------------------
-    BeginDrawing();
-
-    ClearBackground(RAYWHITE);
-
-    DrawText("GAME", 10, 10, 20, DARKGRAY);
-
-    DrawCircleV(playerPosition, 50, RED); // Main Player
-
-    // Other player
-    for (size_t i = 0; i < MAX_PLAYERS; i++)
+    while (!WindowShouldClose() && game_state == GS_GAME)
     {
-        if (players[i].playerstate != 1 || id == players[i].socket_fd)
+
+        //----------------------------------------------------------------------------------
+        // Update
+        //----------------------------------------------------------------------------------
+
+        pullFromServer();
+
+        if (IsKeyDown(KEY_UP))
+            playerPosition.y -= playerSpeed;
+
+        if (IsKeyDown(KEY_DOWN))
+            playerPosition.y += playerSpeed;
+
+        if (IsKeyDown(KEY_LEFT))
+            playerPosition.x -= playerSpeed;
+
+        if (IsKeyDown(KEY_RIGHT))
+            playerPosition.x += playerSpeed;
+
+        // Deja caper avec setTargetFPS()
+        sendPlayerPosition(playerPosition);
+
+        //----------------------------------------------------------------------------------
+        // Draw
+        //----------------------------------------------------------------------------------
+        BeginDrawing();
+
+        ClearBackground(RAYWHITE);
+
+        DrawText("GAME", 10, 10, 20, DARKGRAY);
+
+        DrawCircleV(playerPosition, 50, RED); // Main Player
+
+        // Other player
+        for (size_t i = 0; i < MAX_PLAYERS; i++)
         {
-            continue;
+            if (players[i].playerstate != 1 || id == players[i].socket_fd)
+            {
+                continue;
+            }
+
+            DrawCircle(players[i].x, players[i].y, 50, MAGENTA);
         }
 
-        DrawCircle(players[i].x, players[i].y, 50, MAGENTA);
+        EndDrawing();
+        //----------------------------------------------------------------------------------
     }
-
-    EndDrawing();
-    //----------------------------------------------------------------------------------
 }
 
 int main(void)
@@ -205,7 +248,8 @@ int main(void)
     uint16_t length;
     recv(sockfd, &length, sizeof(length), 0);
 
-    int n = recv(sockfd, &id, sizeof(id), 0);
+    int n = recv(sockfd, &id, length, 0);
+
 
     if (n <= 0)
     {
@@ -220,12 +264,7 @@ int main(void)
     // Raylib Initialization
     //--------------------------------------------------------------------------------------
 
-    const int screenWidth = 1200;
-    const int screenHeight = 720;
-
     InitWindow(screenWidth, screenHeight, "raylib multiplayer socket");
-
-    playerPosition = (Vector2){(float)screenWidth / 2, (float)screenHeight / 2};
 
     SetTargetFPS(60);
 
