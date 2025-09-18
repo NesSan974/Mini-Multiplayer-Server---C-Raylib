@@ -3,6 +3,7 @@
 Ce projet est un petit prototype de **serveur multijoueur** codé en **C** avec des clients graphiques utilisant **Raylib**. Il a été développé en **2 jours** dans le but d’expérimenter les sockets, la synchronisation réseau et un protocole custom simple.
 
 J'ai utilisé [raylib-quickstart](https://github.com/raylib-extras/raylib-quickstart) ainsi que l'exemple [example - input keys](https://github.com/raysan5/raylib/blob/master/examples/core/core_input_keys.c) (demo de l'exemple [dispo ici](https://www.raylib.com/examples.html) )
+
 ---
 
 ## 🐧 Plateforme
