@@ -80,21 +80,19 @@ Le protocole utilise un format compact :
 gcc -o server server.c
 ./server
 ```
-### Client (nécessite Raylib)
+### Client
 
 - #### VSCode Users (all platforms)
 *Note* You must have a compiler toolchain installed in addition to vscode.
 
-* Download the quickstart
-* Rename the folder to your game name
 * Open the folder in VSCode
 * Run the build task ( `CTRL+SHIFT+B` or `F5` )
 * You are good to go
 
 - #### Linux Users
-* CD into the build folder
+* CD into the build folder `cd build`
 * run `./premake5 gmake`
-* CD back to the root
+* CD back to the root `cd ..`
 * run `make`
 * you are good to go
 
