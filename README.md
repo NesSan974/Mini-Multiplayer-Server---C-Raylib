@@ -22,7 +22,7 @@ J'ai utilisé [raylib-quickstart](https://github.com/raylib-extras/raylib-quicks
 
 - Le serveur central gère les connexions et la communication entre joueurs.
 - Chaque client représente un joueur contrôlant un **cercle** à l’écran.
-- Lorsque deux joueurs ou plus sont prêts, la "partie" commence.
+- Lorsque tout les joueurs sont prêts, la "partie" commence.
 - Les positions sont synchronisées en temps réel entre les clients.
 
 ---
