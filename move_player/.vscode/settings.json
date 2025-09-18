@@ -1,0 +1,19 @@
+{
+	"files.exclude": {
+		"**/.git": true,
+		"**/.svn": true,
+		"**/.hg": true,
+		"**/CVS": true,
+		"**/.DS_Store": true,
+		"**/*.o": true,
+		"**/*.exe": true,
+	},
+	"files.associations": {
+		"resource_dir.h": "c",
+		"raymath.h": "c",
+		"compare": "c",
+		"cstdint": "c",
+		"*.m": "c",
+		"algorithm": "c"
+	}
+}
