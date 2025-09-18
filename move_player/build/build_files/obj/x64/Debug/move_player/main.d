@@ -25,7 +25,7 @@ obj/x64/Debug/move_player/main.o: ../../src/main.c \
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h \
  /usr/include/x86_64-linux-gnu/bits/iscanonical.h \
- ../../include/resource_dir.h /usr/include/x86_64-linux-gnu/sys/socket.h \
+ /usr/include/x86_64-linux-gnu/sys/socket.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_iovec.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
  /usr/include/x86_64-linux-gnu/bits/socket.h \
@@ -88,7 +88,7 @@ obj/x64/Debug/move_player/main.o: ../../src/main.c \
  /usr/include/x86_64-linux-gnu/bits/getopt_posix.h \
  /usr/include/x86_64-linux-gnu/bits/getopt_core.h \
  /usr/include/x86_64-linux-gnu/bits/unistd_ext.h \
- /usr/include/linux/close_range.h
+ /usr/include/linux/close_range.h ../../src/../../server/net_protocol.h
 /usr/include/stdc-predef.h:
 ../external/raylib-master/src/raylib.h:
 /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h:
@@ -118,7 +118,6 @@ obj/x64/Debug/move_player/main.o: ../../src/main.c \
 /usr/include/x86_64-linux-gnu/bits/mathcalls.h:
 /usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h:
 /usr/include/x86_64-linux-gnu/bits/iscanonical.h:
-../../include/resource_dir.h:
 /usr/include/x86_64-linux-gnu/sys/socket.h:
 /usr/include/x86_64-linux-gnu/bits/types/struct_iovec.h:
 /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h:
@@ -191,3 +190,4 @@ obj/x64/Debug/move_player/main.o: ../../src/main.c \
 /usr/include/x86_64-linux-gnu/bits/getopt_core.h:
 /usr/include/x86_64-linux-gnu/bits/unistd_ext.h:
 /usr/include/linux/close_range.h:
+../../src/../../server/net_protocol.h:

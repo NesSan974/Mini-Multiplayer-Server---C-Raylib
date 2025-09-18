@@ -23,10 +23,10 @@ PlayerNetwork players[MAX_PLAYERS];
 
 void sendPlayerPosition(Vector2 position)
 {
-    send(sockfd, &(char){'M'}, sizeof(char), 0);
+    send(sockfd, &(char){PLAYER_MOVE}, sizeof(char), 0);
     send(sockfd, &(uint16_t){sizeof(position.x) + sizeof(position.y)}, sizeof(uint16_t), 0);
 
-    // NOTE : Verifierles endianess htons/htonl si ca pose pas de probleme
+    // NOTE : Verifier les endianess htons/htonl si ca pose pas de probleme
 
     send(sockfd, &position.x, sizeof(position.x), 0);
     send(sockfd, &position.y, sizeof(position.y), 0);
@@ -49,14 +49,11 @@ void pullFromServer()
     switch (type)
     {
     case WELCOME:
-        printf("DATA ! %c\n", type);
 
         recv(sockfd, &id, sizeof(id), MSG_WAITALL);
         break;
 
     case UPDATE_ALL_PLAYERS:
-        printf("DATA ! %c\n", type);
-        printf("len : %d, nb player : %ld\n", length, length / playerNetworkSize);
 
         // NOTE : verifier endianess si vrai lan cross plateform
         for (size_t i = 1; i <= length / playerNetworkSize; i++)
@@ -67,8 +64,6 @@ void pullFromServer()
         break;
 
     case GOPLAY:
-        printf("DATA ! %c\n", type);
-
         printf("game start ! \n");
         uint8_t nil;
         recv(sockfd, &nil, sizeof(nil), MSG_WAITALL);
@@ -78,6 +73,7 @@ void pullFromServer()
 
     default:
         printf("default case !!! unreachable ! \n");
+        // On flush les les données du socket, car ils sont actuellement probablement illisible
         char flush[256];
         recv(sockfd, &flush, sizeof(flush), MSG_DONTWAIT);
         break;
@@ -86,8 +82,7 @@ void pullFromServer()
 
 void sendReadyToPlay()
 {
-
-    send(sockfd, &(char){'R'}, sizeof(char), 0);
+    send(sockfd, &(char){READY}, sizeof(char), 0);
     send(sockfd, &(uint16_t){sizeof(id)}, sizeof(uint16_t), 0);
     send(sockfd, &id, sizeof(id), 0);
 }
@@ -107,10 +102,7 @@ void lobby_update()
     // Check button state
     if (CheckCollisionPointRec(mousePoint, button) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
     {
-
-
         sendReadyToPlay();
-
     }
 
     //----------------------------------------------------------------------------------
@@ -180,8 +172,6 @@ void game_update()
 
 int main(void)
 {
-    // Ignorer le SIGPIPE.
-    // Arrive lorsqu'on écrit dans une socket fermé 
 
     // Socket Initialization
     //--------------------------------------------------------------------------------------
@@ -201,9 +191,13 @@ int main(void)
         return 1;
     }
 
+    // Envois du hello, conformement au protocol.
+
     send(sockfd, &(char){HELLO}, sizeof(char), 0);
     send(sockfd, &(uint16_t){0}, sizeof(uint16_t), 0);
     send(sockfd, &(uint8_t){0}, sizeof(uint8_t), 0);
+
+    // Reception du Welcome, conformement au protocol.
 
     uint8_t type;
     recv(sockfd, &type, sizeof(type), 0);
@@ -215,13 +209,11 @@ int main(void)
 
     if (n <= 0)
     {
-        printf("error, recv a chier ! %d\n", n);
         return 2;
     }
 
     if (type != 'W')
     {
-        printf("error, mauvais type ! %c\n", type);
         return 1;
     }
 
@@ -268,7 +260,8 @@ int main(void)
     //--------------------------------------------------------------------------------------
 
     //---------------------Closing connection and Socket------------------------------------
-    send(sockfd, &(char){'B'}, sizeof(char), 0);
+    // Send Bye
+    send(sockfd, &(char){BYE}, sizeof(char), 0);
     send(sockfd, &(uint16_t){sizeof(uint8_t)}, sizeof(uint16_t), 0);
     send(sockfd, &(uint8_t){0}, sizeof(uint8_t), MSG_WAITALL);
     close(sockfd);

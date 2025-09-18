@@ -107,5 +107,11 @@ gcc -o server server.c
 
 ## 📷 Aperçu
 
+2 clients :
+![Demo 2p](demo_2player.gif)
 
-![Demo du jeu](demo.gif)
+
+
+3clients :
+![Demo 3p](demo_3player.gif)
+
