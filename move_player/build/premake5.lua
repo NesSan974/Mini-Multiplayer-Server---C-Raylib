@@ -171,6 +171,7 @@ if (downloadRaylib) then
         
         includedirs { "../src" }
         includedirs { "../include" }
+        includedirs { "../../common/include" }
 
         links {"raylib"}
 
@@ -189,20 +190,12 @@ if (downloadRaylib) then
             links {"raylib.lib"}
             characterset ("Unicode")
             buildoptions { "/Zc:__cplusplus" }
-
-        filter "system:windows"
-            defines{"_WIN32"}
-            links {"winmm", "gdi32", "opengl32"}
-            libdirs {"../bin/%{cfg.buildcfg}"}
-
-        filter "system:linux"
-            links {"pthread", "m", "dl", "rt", "X11"}
-
-        filter "system:macosx"
-            links {"OpenGL.framework", "Cocoa.framework", "IOKit.framework", "CoreFoundation.framework", "CoreAudio.framework", "CoreVideo.framework", "AudioToolbox.framework"}
-
-        filter{}
         
+        filter{}
+
+        libdirs { "../../common/lib" } 
+
+        links {"pthread", "m", "dl", "rt", "X11", "common"}        
 
     project "raylib"
         kind "StaticLib"

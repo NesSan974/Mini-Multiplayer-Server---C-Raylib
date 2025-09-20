@@ -1,7 +1,7 @@
 
 # 🎮 Mini Multiplayer Server - C / Raylib
 
-Ce projet est un petit prototype de **serveur multijoueur** codé en **C** avec des clients graphiques utilisant **Raylib**. Il a été développé en **2 jours** dans le but d’expérimenter les sockets, la synchronisation réseau et un protocole custom simple en TCP/IP classic.
+Ce projet est un petit prototype de **serveur multijoueur** codé en **C** avec des clients graphiques utilisant **Raylib**. Le but est d’expérimenter les sockets, la synchronisation réseau et un protocole custom simple en TCP/IP classic.
 
 J'ai utilisé [raylib-quickstart](https://github.com/raylib-extras/raylib-quickstart) ainsi que l'exemple [example - input keys](https://github.com/raysan5/raylib/blob/master/examples/core/core_input_keys.c) (demo de l'exemple [dispo ici](https://www.raylib.com/examples.html) ) comme base.
 
@@ -53,49 +53,86 @@ Le protocole utilise un format compact :
 ## 📁 Structure du projet
 
 ```bash
-.
-├── move_player/
-│   ├── bin/
+./
+├── demo_2player.gif
+├── demo_3player.gif
+├── README.md
+├── common/
+│   ├── compile.sh*
 │   ├── build/
 │   ├── include/
+│   │   ├── PlayerNetwork.h
+│   │   └── ProtocolNetwork.h
+│   ├── lib/
+│   └── src/
+│       ├── PlayerNetwork.c
+│       └── ProtocolNetwork.c
+├── move_player/
 │   ├── Makefile
 │   ├── README.md
+│   ├── bin/
+│   ├── build/
+│   │   ├── premake5*
+│   │   └── premake5.lua
+│   ├── include/
+│   │   ├── main.h
+│   │   ├── Multiplayer.h
+│   │   └── stb_ds.h
 │   ├── resources/
-│   └── src
+│   └── src/
 │       ├── application.rc
 │       ├── icon.ico
-│       └── main.c
-├── README.md
+│       ├── main.c
+│       └── Multiplayer.c
 └── server/
-    ├── main.c
-    ├── net_protocol.h
-    └── server
-
+    ├── compile.sh*
+    ├── bin/
+    ├── include/
+    │   ├── Globals.h
+    │   ├── Player.h
+    │   ├── ProtocolHandler.h
+    │   └── stb_ds.h
+    └── src/
+        ├── Globals.c
+        ├── main.c
+        ├── Player.c
+        └── ProtocolHandler.c
 ```
+
+Les structures et fonctions destiné à être utilisé par le client et le server sont mis dans "common", qui est compilé en tant que librairie static (.a).  
 
 ## ⚙️ Compilation
 
 ### Serveur
 ```bash
-gcc -o server server.c
-./server
+cd server/
+./compile.sh
+./bin/server
 ```
-### Client
 
-- #### VSCode Users (all platforms)
-*Note* You must have a compiler toolchain installed in addition to vscode.
+### Libcommon.a
+```bash
+cd common/
+./compile.sh
+# Output : lib/libcommon.a
+```
 
-* Open the folder in VSCode
-* Run the build task ( `CTRL+SHIFT+B` or `F5` )
-* You are good to go
+### Client (nécessite Raylib)
 
-- #### Linux Users
-* CD into the build folder `cd build`
-* run `./premake5 gmake`
-* CD back to the root `cd ..`
-* run `make`
-* you are good to go
+> - VSCode (all platforms)
 
+1. Download the quickstart
+2. Rename the folder to your game name
+3. Open the folder in VSCode
+4. Run the build task ( `CTRL+SHIFT+B` or `F5` )
+5. You are good to go
+
+> - CLI (with `make`)
+1. CD into the build folder
+2. run `./premake5 gmake`
+3. CD back to the root
+4. run `make`
+5. you are good to go
 
 ## 🎯 Fonctionnalités
 

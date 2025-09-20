@@ -39,14 +39,6 @@
             "externalConsole": false,
             "program": "${workspaceFolder}/bin/Release/${workspaceFolderBasename}.exe",
             "MIMode": "gdb",
-            "windows": {
-              "program": "${workspaceFolder}/bin/Release/${workspaceFolderBasename}.exe",
-              "miDebuggerPath": "gdb.exe"
-            },
-            "osx": {
-              "program": "${workspaceFolder}/bin/Release/${workspaceFolderBasename}",
-              "MIMode": "lldb"
-            },
             "linux": {
               "program": "${workspaceFolder}/bin/Release/${workspaceFolderBasename}",
               "miDebuggerPath": "/usr/bin/gdb"
